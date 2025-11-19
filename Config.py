@@ -1,14 +1,10 @@
-# Таймфреймы для мониторинга
-INTERVALS = ["1m", "5m", "15m", "30m"]
-
-# Монеты для отслеживания
-SYMBOLS = ["CLANKERUSDT", "RESOLVUSDT", "USELESSUSDT"]
-
-# Порог роста (%) для пампа
-PUMP_THRESHOLD = 2.0
-
-# Множитель объема
-VOLUME_MULTIPLIER = 2.0
-
-# Количество свечей для среднего объема
-AVG_VOLUME_CANDLES = 10
+BINANCE_WS = "wss://stream.binance.com:9443/ws"
+INTERVALS = ["1m","5m","15m","30m"]
+EMAIL_SETTINGS = {
+    "smtp_server": "smtp.gmail.com",
+    "smtp_port": 587,
+    "username": "your_email@gmail.com",
+    "password": "app_password",
+    "to": "recipient_email@gmail.com"
+}
+PUMP_THRESHOLD = 10  # процент роста для уведомления

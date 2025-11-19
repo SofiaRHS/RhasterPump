@@ -1,5 +1,7 @@
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, jsonify
 from data.Storage import price_data, signals
+import threading, asyncio
+from lib.Fetch import start_ws
 
 app = Flask(__name__)
 
@@ -8,16 +10,10 @@ def index():
     return render_template("dashboard.html")
 
 @app.route("/data")
-def get_data():
-    # возвращаем все пары и сигналы
-    return jsonify({
-        "price_data": price_data,
-        "signals": signals
-    })
+def data():
+    return jsonify({"price_data": price_data, "signals": signals})
 
-@app.route("/add_pair", methods=["POST"])
-def add_pair():
-    sym = request.json.get("symbol")
-    # добавить подписку в Websocket клиент
-    # например: ws_client.symbols.append(sym)
-    return jsonify({"status": "ok", "symbol": sym})
+def run_ws():
+    asyncio.run(start_ws())
+
+threading.Thread(target=run_ws, daemon=True).start()
