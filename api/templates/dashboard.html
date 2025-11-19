@@ -1,13 +1,45 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
-    <h1>Pump Monitor</h1>
-    <table id="pairs-table">
-        <tr><th>Symbol</th><th>Close</th><th>Signal</th></tr>
-    </table>
-    <script src="{{ url_for('static', filename='dashboard.js') }}"></script>
-</body>
-</html>
+<h1>Pump Monitor</h1>
+
+<div id="tabs">
+    <button onclick="showInterval('1m')">1m</button>
+    <button onclick="showInterval('5m')">5m</button>
+    <button onclick="showInterval('15m')">15m</button>
+    <button onclick="showInterval('30m')">30m</button>
+</div>
+
+<div id="tables">
+    <table id="table-1m"><tr><th>Symbol</th><th>Close</th><th>Signal</th></tr></table>
+    <table id="table-5m" style="display:none"><tr><th>Symbol</th><th>Close</th><th>Signal</th></tr></table>
+    <table id="table-15m" style="display:none"><tr><th>Symbol</th><th>Close</th><th>Signal</th></tr></table>
+    <table id="table-30m" style="display:none"><tr><th>Symbol</th><th>Close</th><th>Signal</th></tr></table>
+</div>
+
+<script>
+function showInterval(interval) {
+    ["1m","5m","15m","30m"].forEach(i=>{
+        document.getElementById(`table-${i}`).style.display = i===interval?"":"none";
+    });
+}
+
+async function fetchData() {
+    const res = await fetch("/data");
+    const data = await res.json();
+    for (const key in data.price_data) {
+        const [symbol, intv] = key.split("@kline_");
+        const table = document.getElementById(`table-${intv}`);
+        if (!table) continue;
+        const v = data.price_data[key];
+        const signal = data.signals[key];
+        let row = document.getElementById(key);
+        if (!row) {
+            row = document.createElement("tr");
+            row.id = key;
+            table.appendChild(row);
+        }
+        row.innerHTML = `<td>${symbol}</td><td>${v.close}</td>
+                         <td style="color:${signal=="pump"?"green":signal=="drop"?"red":"black"}">${signal}</td>`;
+    }
+}
+
+setInterval(fetchData, 5000);
+</script>
