@@ -1,5 +1,0 @@
-body { font-family: Arial; margin: 20px; }
-.card { display:inline-block; border:1px solid #ccc; padding:10px; margin:5px; width:150px; }
-.card.up { background:#c8f7c5; }
-.card.down { background:#f7c5c5; }
-.card.neutral { background:#f0f0f0; }
