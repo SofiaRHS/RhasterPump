@@ -1,20 +1,23 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Pump Monitor</title>
-    <link rel="stylesheet" href="/static/style.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<meta charset="UTF-8">
+<title>Pump Monitor</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 </head>
 <body>
-<h1>Pump Monitor</h1>
-<div id="tabs">
-    <button onclick="showInterval('1m')">1m</button>
-    <button onclick="showInterval('5m')">5m</button>
-    <button onclick="showInterval('15m')">15m</button>
-    <button onclick="showInterval('30m')">30m</button>
+<h1>Pump Monitor Dashboard</h1>
+<div>
+    <label>Добавить пару: <input type="text" id="newPair"><button onclick="addPair()">Добавить</button></label>
 </div>
-<div id="cards"></div>
-
-<script src="/static/dashboard.js"></script>
+<div id="tabs">
+    <button onclick="setTF('1m')">1m</button>
+    <button onclick="setTF('5m')">5m</button>
+    <button onclick="setTF('15m')">15m</button>
+    <button onclick="setTF('30m')">30m</button>
+</div>
+<div id="dashboard"></div>
+<script src="{{ url_for('static', filename='dashboard.js') }}"></script>
 </body>
 </html>

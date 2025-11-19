@@ -1,30 +1,19 @@
-# lib/Websocket.py
-import asyncio, websockets, json
-from data.Storage import price_data
+import websocket, json, threading
+from lib.Analysis import update_price
 
-BINANCE_WS = "wss://stream.binance.com:9443/stream?streams="
+SOCKET_URL = "wss://stream.binance.com:9443/ws"
 
-class BinanceWS:
-    def __init__(self):
-        self.symbols = ["clankerusdt", "resolvusdt", "uselessusdt"]
-        self.intervals = ["1m", "5m", "15m", "30m"]
+def start_ws(storage):
+    def on_message(ws, message):
+        data = json.loads(message)
+        pair = data['s'].upper()
+        price = float(data['c'])
+        update_price(pair, price)
 
-    async def _ws_loop(self):
-        streams = [f"{s}@kline_{i}" for s in self.symbols for i in self.intervals]
-        url = BINANCE_WS + "/".join(streams)
-        async with websockets.connect(url) as ws:
-            while True:
-                msg = await ws.recv()
-                data = json.loads(msg)
-                key = f"{data['stream']}"
-                k = data["data"]["k"]
-                price_data[key] = {
-                    "time": k["t"],
-                    "open": float(k["o"]),
-                    "close": float(k["c"]),
-                    "volume": float(k["v"])
-                }
+    def run():
+        pairs = [p.lower() + "@ticker" for p in storage.get_pairs()]
+        ws_url = SOCKET_URL + "/" + "/".join(pairs)
+        ws = websocket.WebSocketApp(ws_url, on_message=on_message)
+        ws.run_forever()
 
-def start_ws():
-    ws = BinanceWS()
-    asyncio.run(ws._ws_loop())
+    threading.Thread(target=run).start()

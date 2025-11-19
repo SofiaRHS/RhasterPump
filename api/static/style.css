@@ -1,4 +1,5 @@
-body { font-family: sans-serif; margin: 20px; }
-#tabs button { margin: 5px; padding: 5px 10px; }
-#cards { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
-.card { padding: 10px; width: 150px; border-radius: 5px; }
+body { font-family: Arial; margin: 20px; }
+.card { display:inline-block; border:1px solid #ccc; padding:10px; margin:5px; width:150px; }
+.card.up { background:#c8f7c5; }
+.card.down { background:#f7c5c5; }
+.card.neutral { background:#f0f0f0; }

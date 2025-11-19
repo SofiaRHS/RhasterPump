@@ -1,26 +1,42 @@
-let interval = "1m";
+let timeframe = '1m';
 
-function showInterval(i){
-    interval = i;
+function fetchSignals() {
+    fetch(`/signals?tf=${timeframe}`)
+        .then(res => res.json())
+        .then(data => renderDashboard(data));
 }
 
-async function fetchData(){
-    const res = await fetch("/data");
-    const data = await res.json();
-    const container = document.getElementById("cards");
+function renderDashboard(pairs) {
+    const container = document.getElementById("dashboard");
     container.innerHTML = "";
-    for(const key in data.price_data){
-        if(!key.endsWith(interval)) continue;
-        const item = data.price_data[key];
-        const signal = data.signals[key];
+    pairs.forEach(p => {
         const card = document.createElement("div");
-        card.className = "card";
-        card.style.border = `2px solid ${signal=="pump"?"green":signal=="drop"?"red":"gray"}`;
-        card.innerHTML = `<h3>${key.split("@")[0]}</h3>
-                          <p>Close: ${item.close}</p>
-                          <p>Change: ${item.percent?.toFixed(2) || 0}%</p>`;
+        card.className = "card " + p.trend;
+        card.innerHTML = `<h3>${p.pair}</h3><p>${p.percent}%</p><div id="chart-${p.pair}"></div>`;
         container.appendChild(card);
-    }
+
+        let options = {
+            chart: { type: 'line', height: 100 },
+            series: [{ data: [p.percent] }],
+            xaxis: { categories: [0] }
+        };
+        new ApexCharts(document.querySelector(`#chart-${p.pair}`), options).render();
+    });
 }
 
-setInterval(fetchData, 3000);
+function setTF(tf) {
+    timeframe = tf;
+    fetchSignals();
+}
+
+function addPair() {
+    const pair = document.getElementById("newPair").value;
+    fetch('/add_pair', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({pair})
+    }).then(() => fetchSignals());
+}
+
+setInterval(fetchSignals, 2000);
+fetchSignals();

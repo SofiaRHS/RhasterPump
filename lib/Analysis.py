@@ -1,20 +1,20 @@
-from data.Storage import price_data, signals
-from lib.Utils import send_email
-from Config import PUMP_THRESHOLD
+import time
 
-def analyze(symbol_interval, new_close):
-    old_close = price_data.get(symbol_interval, {}).get("close")
-    if old_close:
-        percent = (new_close - old_close)/old_close*100
-        price_data[symbol_interval]["percent"] = percent
-        signal = "none"
-        if percent >= PUMP_THRESHOLD:
-            signal = "pump"
-            send_email(f"{symbol_interval} Pump Alert", f"{symbol_interval} increased {percent:.2f}%")
-        elif percent <= -PUMP_THRESHOLD:
-            signal = "drop"
-            send_email(f"{symbol_interval} Drop Alert", f"{symbol_interval} decreased {percent:.2f}%")
-        signals[symbol_interval] = signal
-    else:
-        price_data[symbol_interval] = {"close": new_close, "percent":0}
-        signals[symbol_interval] = "none"
+prices = {}
+
+def update_price(pair, price):
+    if pair not in prices:
+        prices[pair] = []
+    prices[pair].append((time.time(), price))
+    if len(prices[pair]) > 500:
+        prices[pair] = prices[pair][-500:]
+
+def analyze_signal(pair, tf):
+    tf_seconds = {"1m": 60, "5m": 300, "15m": 900, "30m": 1800}
+    now = time.time()
+    history = [p for t, p in prices.get(pair, []) if now - t <= tf_seconds.get(tf, 60)]
+    if not history:
+        return {"percent": 0, "trend": "neutral"}
+    change = (history[-1] - history[0]) / history[0] * 100
+    trend = "up" if change > 0 else "down" if change < 0 else "neutral"
+    return {"percent": round(change, 2), "trend": trend}
