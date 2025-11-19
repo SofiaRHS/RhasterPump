@@ -1,16 +1,27 @@
-from collections import deque, defaultdict
+from collections import defaultdict
+from datetime import datetime
 
-from Config import SYMBOLS, INTERVALS, HISTORY_CANDLES
+# Структуры хранения
+signals = defaultdict(list)        # {"SYMBOL_INTERVAL": [signal,...]}
+price_history = defaultdict(list)  # {"SYMBOL_INTERVAL": [(time, close, volume), ...]}
 
-price_history = {f"{s}_{i}": deque(maxlen=HISTORY_CANDLES) for s in SYMBOLS for i in INTERVALS}
-volume_history = {f"{s}_{i}": deque(maxlen=HISTORY_CANDLES) for s in SYMBOLS for i in INTERVALS}
-signals = defaultdict(list)
-
-def add_candle(symbol, interval, timestamp, close, volume):
+def add_candle(symbol, interval, close, volume):
     key = f"{symbol}_{interval}"
-    price_history[key].append((timestamp, close))
-    volume_history[key].append((timestamp, volume))
+    price_history[key].append((datetime.utcnow(), close, volume))
+    # Сохраняем только последние 500 свечей
+    if len(price_history[key]) > 500:
+        price_history[key] = price_history[key][-500:]
 
-def add_signal(symbol, interval, signal):
+def add_signal(symbol, interval, change, volume, avg_volume):
     key = f"{symbol}_{interval}"
-    signals[key].append(signal)
+    signals[key].append({
+        "time": datetime.utcnow().isoformat(),
+        "symbol": symbol,
+        "interval": interval,
+        "change": change,
+        "volume": volume,
+        "avg_volume": avg_volume
+    })
+    # Сохраняем максимум 50 сигналов
+    if len(signals[key]) > 50:
+        signals[key] = signals[key][-50:]

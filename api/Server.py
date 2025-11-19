@@ -1,17 +1,23 @@
-import os
-from flask import Flask, jsonify
-from data.Storage import signals
+from flask import Flask, jsonify, render_template
+from data.Storage import signals, price_history
+from lib.Fetch import get_symbols
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder="templates")
 
-@app.route("/", methods=["GET"])
+@app.route("/")
 def index():
-    return "<h2>Pump Monitor API</h2><p>Доступные эндпоинты: /signals</p>"
+    return render_template("dashboard.html")
 
-@app.route("/signals", methods=["GET"])
+@app.route("/signals")
 def get_signals():
     return jsonify(signals)
 
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+@app.route("/symbols")
+def symbols():
+    return jsonify(get_symbols())
+
+@app.route("/candles/<symbol>/<interval>")
+def candles(symbol, interval):
+    key = f"{symbol}_{interval}"
+    data = [{"time": t.isoformat(), "close": c, "volume": v} for t,c,v in price_history.get(key,[])]
+    return jsonify(data)

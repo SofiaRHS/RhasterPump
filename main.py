@@ -1,17 +1,13 @@
 import asyncio
-from lib.Websocket import start_ws
 import threading
 from api.Server import app
+from lib.Websocket import start_ws
 import os
 
-def start_api():
+def run_api():
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
 
 if __name__ == "__main__":
-    # Запуск API в отдельном потоке
-    t = threading.Thread(target=start_api)
-    t.start()
-    
-    # Запуск WebSocket мониторинга
+    threading.Thread(target=run_api).start()
     asyncio.run(start_ws())

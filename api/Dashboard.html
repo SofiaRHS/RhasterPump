@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Pump Monitor</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<h1>Pump Monitor</h1>
+<select id="symbol">
+    <option>CLANKERUSDT</option>
+    <option>RESOLVUSDT</option>
+    <option>USELESSUSDT</option>
+</select>
+<select id="interval">
+    <option>1m</option>
+    <option>5m</option>
+    <option>15m</option>
+    <option>30m</option>
+</select>
+<canvas id="priceChart" width="800" height="400"></canvas>
+
+<script>
+let ctx = document.getElementById('priceChart').getContext('2d');
+let chart = new Chart(ctx, {
+    type: 'line',
+    data: { labels: [], datasets: [{label:'Close Price', data: []}] },
+    options: {}
+});
+
+async function updateChart() {
+    let sym = document.getElementById('symbol').value;
+    let intv = document.getElementById('interval').value;
+    let res = await fetch(`/candles/${sym}/${intv}`);
+    let data = await res.json();
+    chart.data.labels = data.map(c => c.time);
+    chart.data.datasets[0].data = data.map(c => c.close);
+    chart.update();
+}
+
+setInterval(updateChart, 2000);
+</script>
+</body>
+</html>

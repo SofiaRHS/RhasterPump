@@ -1,32 +1,29 @@
 import asyncio
 import json
 import websockets
-from datetime import datetime
-from Config import SYMBOLS, INTERVALS, BINANCE_WS
+from Config import SYMBOLS, INTERVALS
+from lib.Analysis import analyze_candle
 from data.Storage import add_candle
-from lib.Analysis import check_pump
 
-def make_payload():
-    params = [f"{s.lower()}@kline_{i}" for s in SYMBOLS for i in INTERVALS]
-    return json.dumps({
-        "method": "SUBSCRIBE",
-        "params": params,
-        "id": 1
-    })
+BINANCE_WS = "wss://fstream.binance.com/stream?streams="
+
+def build_stream_url():
+    streams = []
+    for s in SYMBOLS:
+        for i in INTERVALS:
+            streams.append(f"{s.lower()}@kline_{i}")
+    return BINANCE_WS + "/".join(streams)
 
 async def start_ws():
-    async with websockets.connect(BINANCE_WS) as ws:
-        await ws.send(make_payload())
-        async for msg in ws:
+    url = build_stream_url()
+    async with websockets.connect(url) as ws:
+        while True:
+            msg = await ws.recv()
             data = json.loads(msg)
-            if data.get("e") == "kline":
-                k = data["k"]
-                sym = k["s"]
-                interval = k["i"]
-                close = float(k["c"])
-                volume = float(k["v"])
-                ts = datetime.fromtimestamp(k["t"]/1000)
-                add_candle(sym, interval, ts, close, volume)
-                signal = check_pump(sym, interval)
-                if signal:
-                    print(f"[PUMP] {signal}")
+            k = data["data"]["k"]
+            symbol = k["s"]
+            interval = k["i"]
+            close = float(k["c"])
+            volume = float(k["v"])
+            add_candle(symbol, interval, close, volume)
+            analyze_candle(symbol, interval, close, volume)

@@ -1,29 +1,15 @@
-from datetime import datetime
-from data.Storage import price_history, volume_history, add_signal
-from Config import PUMP_THRESHOLD, VOLUME_MULTIPLIER
+from data.Storage import add_signal, price_history
+from Config import PUMP_THRESHOLD, VOLUME_MULTIPLIER, AVG_VOLUME_CANDLES
 
-def check_pump(symbol, interval):
+def analyze_candle(symbol, interval, close, volume):
     key = f"{symbol}_{interval}"
-    pri = price_history[key]
-    vol = volume_history[key]
-    if len(pri) < 2 or len(vol) < 2:
-        return None
+    candles = price_history.get(key, [])
+    if len(candles) < AVG_VOLUME_CANDLES:
+        return
 
-    old_price = pri[0][1]
-    current_price = pri[-1][1]
-    change = (current_price - old_price) / old_price * 100
-    avg_vol = sum(v for (_, v) in vol)/len(vol)
-    current_vol = vol[-1][1]
+    avg_vol = sum([v for t, c, v in candles[-AVG_VOLUME_CANDLES:]]) / AVG_VOLUME_CANDLES
+    last_close = candles[-1][1]
+    change = ((close - last_close) / last_close) * 100
 
-    if change >= PUMP_THRESHOLD and current_vol >= avg_vol * VOLUME_MULTIPLIER:
-        signal = {
-            "time": datetime.utcnow().isoformat(),
-            "symbol": symbol,
-            "interval": interval,
-            "change": round(change, 2),
-            "volume": current_vol,
-            "avg_volume": avg_vol
-        }
-        add_signal(symbol, interval, signal)
-        return signal
-    return None
+    if change >= PUMP_THRESHOLD and volume >= avg_vol * VOLUME_MULTIPLIER:
+        add_signal(symbol, interval, change, volume, avg_vol)
